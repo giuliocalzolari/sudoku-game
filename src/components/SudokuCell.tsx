@@ -1,4 +1,5 @@
 import React from 'react';
+import { Heart, Star, Sun, Moon, Flower, Zap } from 'lucide-react';
 import type { Cell } from '../types/sudoku';
 
 interface SudokuCellProps {
@@ -6,15 +7,39 @@ interface SudokuCellProps {
   row: number;
   col: number;
   isSelected: boolean;
+  isKidsMode?: boolean;
+  gridSize?: number;
   onSelect: (row: number, col: number) => void;
   onValueChange: (row: number, col: number, value: number) => void;
 }
+
+const kidsIcons = [
+  null, // 0 - empty
+  Heart,   // 1
+  Star,    // 2
+  Sun,     // 3
+  Moon,    // 4
+  Flower,  // 5
+  Zap      // 6
+];
+
+const kidsColors = [
+  '', // 0 - empty
+  'text-red-500',    // 1 - Heart
+  'text-yellow-500', // 2 - Star
+  'text-orange-500', // 3 - Sun
+  'text-purple-500', // 4 - Moon
+  'text-pink-500',   // 5 - Flower
+  'text-blue-500'    // 6 - Zap
+];
 
 export function SudokuCell({ 
   cell, 
   row, 
   col, 
   isSelected, 
+  isKidsMode = false,
+  gridSize = 9,
   onSelect, 
   onValueChange 
 }: SudokuCellProps) {
@@ -28,7 +53,8 @@ export function SudokuCell({
     if (cell.isGiven) return;
 
     const key = e.key;
-    if (key >= '1' && key <= '9') {
+    const maxValue = isKidsMode ? 6 : 9;
+    if (key >= '1' && key <= maxValue.toString()) {
       onValueChange(row, col, parseInt(key));
     } else if (key === 'Backspace' || key === 'Delete' || key === '0') {
       onValueChange(row, col, 0);
@@ -36,20 +62,21 @@ export function SudokuCell({
   };
 
   const getCellClassName = () => {
-    const baseClasses = "w-12 h-12 border border-gray-300 flex items-center justify-center text-lg font-semibold cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500";
+    const cellSize = isKidsMode ? "w-16 h-16" : "w-12 h-12";
+    const baseClasses = `${cellSize} border border-gray-300 flex items-center justify-center text-lg font-semibold cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500`;
     
     let classes = baseClasses;
     
     // Cell background and text color
     if (cell.isGiven) {
-      classes += " bg-blue-50 text-blue-900 font-bold cursor-default";
+      classes += isKidsMode ? " bg-green-50 cursor-default" : " bg-blue-50 text-blue-900 font-bold cursor-default";
     } else {
-      classes += " bg-white text-gray-800 hover:bg-blue-50";
+      classes += isKidsMode ? " bg-white hover:bg-green-50" : " bg-white text-gray-800 hover:bg-blue-50";
     }
     
     // Selection state
     if (isSelected && !cell.isGiven) {
-      classes += " ring-2 ring-blue-500 bg-blue-100";
+      classes += isKidsMode ? " ring-2 ring-green-500 bg-green-100" : " ring-2 ring-blue-500 bg-blue-100";
     }
     
     // Validation state
@@ -57,15 +84,35 @@ export function SudokuCell({
       classes += " bg-red-100 text-red-700";
     }
     
-    // Grid borders for 3x3 sections
-    if (row % 3 === 0) classes += " border-t-2 border-t-gray-800";
-    if (col % 3 === 0) classes += " border-l-2 border-l-gray-800";
-    if (row === 8) classes += " border-b-2 border-b-gray-800";
-    if (col === 8) classes += " border-r-2 border-r-gray-800";
+    // Grid borders for sections
+    if (isKidsMode) {
+      // 2x3 sections for 6x6 grid
+      if (row % 2 === 0) classes += " border-t-2 border-t-gray-800";
+      if (col % 3 === 0) classes += " border-l-2 border-l-gray-800";
+      if (row === 5) classes += " border-b-2 border-b-gray-800";
+      if (col === 5) classes += " border-r-2 border-r-gray-800";
+    } else {
+      // 3x3 sections for 9x9 grid
+      if (row % 3 === 0) classes += " border-t-2 border-t-gray-800";
+      if (col % 3 === 0) classes += " border-l-2 border-l-gray-800";
+      if (row === 8) classes += " border-b-2 border-b-gray-800";
+      if (col === 8) classes += " border-r-2 border-r-gray-800";
+    }
     
     return classes;
   };
 
+  const renderCellContent = () => {
+    if (cell.value === 0) return '';
+    
+    if (isKidsMode) {
+      const IconComponent = kidsIcons[cell.value];
+      const iconColor = kidsColors[cell.value];
+      return IconComponent ? <IconComponent className={`w-8 h-8 ${iconColor}`} /> : '';
+    }
+    
+    return cell.value;
+  };
   return (
     <div
       className={getCellClassName()}
@@ -75,7 +122,7 @@ export function SudokuCell({
       role="button"
       aria-label={`Cell ${row + 1}, ${col + 1}`}
     >
-      {cell.value === 0 ? '' : cell.value}
+      {renderCellContent()}
     </div>
   );
 }

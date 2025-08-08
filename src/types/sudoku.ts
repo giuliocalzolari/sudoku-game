@@ -1,4 +1,4 @@
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 'kids' | 'easy' | 'medium' | 'hard';
 
 export interface Cell {
   value: number;
@@ -13,4 +13,5 @@ export interface GameState {
   difficulty: Difficulty;
   isComplete: boolean;
   selectedCell: { row: number; col: number } | null;
+  gridSize: number;
 }

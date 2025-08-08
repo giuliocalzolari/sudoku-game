@@ -3,22 +3,27 @@ import type { GameState, Difficulty, Board } from '../types/sudoku';
 import { createPuzzle, validateBoard, isPuzzleComplete } from '../utils/sudokuGenerator';
 
 export function useSudoku(initialDifficulty: Difficulty = 'medium') {
+  const getGridSize = (difficulty: Difficulty) => difficulty === 'kids' ? 6 : 9;
+  
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createPuzzle(initialDifficulty),
     difficulty: initialDifficulty,
     isComplete: false,
-    selectedCell: null
+    selectedCell: null,
+    gridSize: getGridSize(initialDifficulty)
   }));
 
   const newGame = useCallback((difficulty?: Difficulty) => {
     const newDifficulty = difficulty || gameState.difficulty;
     const newBoard = createPuzzle(newDifficulty);
+    const gridSize = getGridSize(newDifficulty);
     
     setGameState({
       board: newBoard,
       difficulty: newDifficulty,
       isComplete: false,
-      selectedCell: null
+      selectedCell: null,
+      gridSize
     });
   }, [gameState.difficulty]);
 
@@ -31,6 +36,9 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
 
   const updateCell = useCallback((row: number, col: number, value: number) => {
     setGameState(prev => {
+      const maxValue = prev.gridSize === 6 ? 6 : 9;
+      if (value > maxValue) return prev;
+      
       const newBoard: Board = prev.board.map((boardRow, r) =>
         boardRow.map((cell, c) => {
           if (r === row && c === col && !cell.isGiven) {
@@ -40,8 +48,8 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
         })
       );
 
-      const validatedBoard = validateBoard(newBoard);
-      const isComplete = isPuzzleComplete(validatedBoard);
+      const validatedBoard = validateBoard(newBoard, prev.gridSize);
+      const isComplete = isPuzzleComplete(validatedBoard, prev.gridSize);
 
       return {
         ...prev,
@@ -61,6 +69,7 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
       if (!gameState.selectedCell) return;
 
       const { row, col } = gameState.selectedCell;
+      const maxIndex = gameState.gridSize - 1;
       let newRow = row;
       let newCol = col;
 
@@ -70,7 +79,7 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
           e.preventDefault();
           break;
         case 'ArrowDown':
-          newRow = Math.min(8, row + 1);
+          newRow = Math.min(maxIndex, row + 1);
           e.preventDefault();
           break;
         case 'ArrowLeft':
@@ -78,7 +87,7 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
           e.preventDefault();
           break;
         case 'ArrowRight':
-          newCol = Math.min(8, col + 1);
+          newCol = Math.min(maxIndex, col + 1);
           e.preventDefault();
           break;
       }
@@ -90,7 +99,7 @@ export function useSudoku(initialDifficulty: Difficulty = 'medium') {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState.selectedCell, selectCell]);
+  }, [gameState.selectedCell, gameState.gridSize, selectCell]);
 
   return {
     gameState,
