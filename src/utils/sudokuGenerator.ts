@@ -134,6 +134,7 @@ export function isValid6x6Move(board: number[][], row: number, col: number, num:
 }
 
 // Validate a move in the Sudoku board
+export function isValidMove(board: number[][], row: number, col: number, num: number): boolean {
   // Check row
   for (let c = 0; c < 9; c++) {
     if (c !== col && board[row][c] === num) {
